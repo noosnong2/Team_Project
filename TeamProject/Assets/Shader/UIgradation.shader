@@ -1,0 +1,79 @@
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "UIGradation" {
+
+    Properties{
+        [PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
+        _Color("Begin Color", Color) = (1,1,1,1)
+        _Color2("End Color", Color) = (1,1,1,1)
+        _Reversal("Reversal",Range(0,1))=0
+        _Strength("Strength",Range(0,1))=0
+    }
+
+        SubShader{
+
+            Tags 
+            {
+                "Queue" = "Background"
+                "IgnoreProjector" = "True"
+            }
+            LOD 100
+            ZWrite On
+            Pass 
+            {
+                CGPROGRAM
+
+                #pragma vertex vert  
+                #pragma fragment frag
+                #include "UnityCG.cginc"
+
+                fixed4 _Color;
+                fixed4 _Color2;
+                fixed _Reversal;
+                fixed _Strength;
+
+                struct v2f {
+
+                    float4 pos : SV_POSITION;
+
+                    fixed4 col : COLOR;
+
+                };
+                v2f vert(appdata_full v) {
+
+                    v2f o;
+
+                    o.pos = UnityObjectToClipPos(v.vertex);
+                    float rs= _Reversal - sin(_Time.y);
+                    float rc= _Reversal - cos(_Time.y);
+
+                    if (rs > _Strength)
+                        rs = _Strength;
+                    else if (rs < -_Strength)
+                        rs = -_Strength;
+
+                    if (rc > _Strength)
+                        rc = _Strength;
+                    else if (rc < -_Strength)
+                        rc = -_Strength;
+
+                    float4 c1 = _Color + rs;
+                    float4 c2 = _Color2 + rc;
+
+                   
+            
+                    o.col = lerp(c1, c2, v.texcoord.y);
+
+                    return o;
+
+                }
+                float4 frag(v2f i) : COLOR {
+
+                    float4 c = i.col;
+                    c.a = 1;
+                    return c;
+                }
+                ENDCG
+            }
+        }
+}
